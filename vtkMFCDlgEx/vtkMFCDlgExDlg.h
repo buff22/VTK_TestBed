@@ -40,8 +40,9 @@ protected:
 public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnBnClickedButtonStart();
-	afx_msg void OnBnClickedButtonTest();
 	afx_msg void OnBnClickedButtonStart2();
+	afx_msg void OnBnClickedButtonTest();
+	afx_msg void OnBnClickedButtonExampleHolefilling();
 
 public:
 	vtkSmartPointer<vtkSTLReader> m_pSTLReader;

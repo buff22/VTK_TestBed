@@ -133,8 +133,8 @@ BEGIN_MESSAGE_MAP(CvtkMFCDlgExDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_START, &CvtkMFCDlgExDlg::OnBnClickedButtonStart)
 	ON_BN_CLICKED(IDC_BUTTON_START2, &CvtkMFCDlgExDlg::OnBnClickedButtonStart2)
-//	ON_BN_CLICKED(IDC_BUTTON_START3, &CvtkMFCDlgExDlg::OnBnClickedButtonStart3)
 	ON_BN_CLICKED(IDC_BUTTON_TEST, &CvtkMFCDlgExDlg::OnBnClickedButtonTest)
+	ON_BN_CLICKED(IDC_BUTTON_EXAMPLE_HOLEFILLING, &CvtkMFCDlgExDlg::OnBnClickedButtonExampleHolefilling)
 END_MESSAGE_MAP()
 
 // CvtkMFCDlgExDlg 메시지 처리기
@@ -735,4 +735,9 @@ void CvtkMFCDlgExDlg::OnBnClickedButtonTest()
 										 //Render and interact
 	renderWindow->Render();
 	renderWindowInteractor->Start();
+}
+
+void CvtkMFCDlgExDlg::OnBnClickedButtonExampleHolefilling()
+{
+	// TODO: Add your control notification handler code here
 }
