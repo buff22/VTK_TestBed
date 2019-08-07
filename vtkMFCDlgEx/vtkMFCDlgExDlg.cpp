@@ -986,14 +986,17 @@ void CvtkMFCDlgExDlg::GenerateNeighborRing(OUT std::vector<vtkIdType>& vecOut,
 	vecRef.push_back(vecPickFace.at(0));
 	for (std::vector<vtkIdType>::iterator iterMax = vecMax.begin(); iterMax != vecMax.end(); ++iterMax)
 	{
-		int nCnt = 0;
+		bool bIsSame = false;
 		for (std::vector<vtkIdType>::iterator iterMin = vecRef.begin(); iterMin != vecRef.end(); ++iterMin)
 		{
 			if ((*iterMax) == (*iterMin))
-				++nCnt;
+			{
+				bIsSame = true;
+				break;
+			}
 		}
 
-		if (nCnt == 0)
+		if (bIsSame == false)
 			vecOut.push_back((*iterMax));
 	}
 }
