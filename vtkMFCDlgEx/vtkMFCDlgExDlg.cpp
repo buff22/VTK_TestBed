@@ -512,9 +512,8 @@ void PickCallbackFunction3(vtkObject* caller, long unsigned int eventId,
 	picker->Pick(pos[0], pos[1], 0,
 		interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
 
-	// cellId1 = Face Idx
-	vtkIdType cellId1 = picker->GetCellId();	// -1이면 picking 되지 않음
-	if (cellId1 != -1)
+	vtkIdType pikingFaceIdx = picker->GetCellId();	// -1이면 picking 되지 않음
+	if (pikingFaceIdx != -1)
 	{
 		// polyData 찾기
 		vtkSmartPointer<vtkRenderer> renderer =
@@ -543,7 +542,7 @@ void PickCallbackFunction3(vtkObject* caller, long unsigned int eventId,
 
 		// Find all cells connected to point 0
 		std::vector<vtkIdType> vec;
-		vec.push_back(cellId1);
+		vec.push_back(pikingFaceIdx);
 		dlg->m_vecNeighborFace.push_back(vec);
 		vec.clear();
 		dlg->m_vecNeighborFace.push_back(vec);
@@ -561,12 +560,21 @@ void PickCallbackFunction3(vtkObject* caller, long unsigned int eventId,
 
 			vec.clear();
 			dlg->m_vecNeighborFace.push_back(vec);
+
+			// <#> Debug 출력
+			OutputDebugString(L"\n Point neighbor ids are: ");
+			for (std::vector<vtkIdType>::iterator it1 = dlg->m_vecNeighborFace.at(i + 1).begin(); it1 != dlg->m_vecNeighborFace.at(i + 1).end(); it1++)
+			{
+				CString strDebug;
+				strDebug.Format(L" %d", *it1);
+				::OutputDebugString(strDebug);
+			}
+			OutputDebugString(L"\n");
 		}
 
+		// <#> PickingFace 색칠하기
 		vtkSmartPointer<vtkDataSetMapper> mapperPickingFace =
 			vtkSmartPointer<vtkDataSetMapper>::New();
-
-		// Create a dataset with the cell of interest
 		{
 			vtkSmartPointer<vtkIdTypeArray> ids =
 				vtkSmartPointer<vtkIdTypeArray>::New();
@@ -590,19 +598,15 @@ void PickCallbackFunction3(vtkObject* caller, long unsigned int eventId,
 			extractSelection->Update();
 
 			mapperPickingFace->SetInputConnection(extractSelection->GetOutputPort());
-
 		}
-
 		vtkSmartPointer<vtkActor> actorPickingFace =
 			vtkSmartPointer<vtkActor>::New();
 		actorPickingFace->SetMapper(mapperPickingFace);
 		actorPickingFace->GetProperty()->SetColor(1, 0, 0);
 		
-
+		// <#> NeighborFace 색칠하기
 		vtkSmartPointer<vtkDataSetMapper> mapperNeighborFace =
 			vtkSmartPointer<vtkDataSetMapper>::New();
-
-		// Create a dataset with the neighbor cells
 		{
 			// GenerateNeighborRing 
 			std::vector<vtkIdType> vecNeighborRing;
@@ -637,7 +641,6 @@ void PickCallbackFunction3(vtkObject* caller, long unsigned int eventId,
 
 			mapperNeighborFace->SetInputConnection(extractSelection->GetOutputPort());
 		}
-
 		vtkSmartPointer<vtkActor> actorNeighborFace =
 			vtkSmartPointer<vtkActor>::New();
 		actorNeighborFace->SetMapper(mapperNeighborFace);
@@ -958,15 +961,6 @@ void CvtkMFCDlgExDlg::GenerateNeighborList(OUT std::vector<vtkIdType>& vecOut,
 			for (vtkIdType j = 0; j < neighborCellIds->GetNumberOfIds(); j++)
 				vecOut.push_back(neighborCellIds->GetId(j));
 		}
-
-		OutputDebugString(L"\n Point neighbor ids are: ");
-		for (std::vector<vtkIdType>::iterator it1 = vecOut.begin(); it1 != vecOut.end(); it1++)
-		{
-			CString strDebug;
-			strDebug.Format(L" %d", *it1);
-			::OutputDebugString(strDebug);
-		}
-		OutputDebugString(L"\n");
 	}
 }
 
