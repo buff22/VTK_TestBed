@@ -1014,13 +1014,15 @@ void CvtkMFCDlgExDlg::OnBnClickedButtonExampleHolefilling()
 
 	vtkSmartPointer<vtkRenderWindow> renderWindow =
 		vtkSmartPointer<vtkRenderWindow>::New();
-	renderWindow->SetSize(600, 300);
+	renderWindow->SetSize(800, 600);
 
 	renderWindow->AddRenderer(leftRenderer);
 	renderWindow->AddRenderer(rightRenderer);
 
 	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor =
 		vtkSmartPointer<vtkRenderWindowInteractor>::New();
+	renderWindowInteractor->SetInteractorStyle(
+		vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New());
 	renderWindowInteractor->SetRenderWindow(renderWindow);
 
 	// Add the actor to the scene
