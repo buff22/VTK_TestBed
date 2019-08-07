@@ -79,6 +79,8 @@
 #include <vtkExtractSelection.h>
 #include <vtkObjectFactory.h>
 #include <vtkDataObject.h>
+#include <vtkNamedColors.h>
+#include <vtkFillHolesFilter.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -934,7 +936,115 @@ void CvtkMFCDlgExDlg::OnBnClickedButtonTest()
 
 void CvtkMFCDlgExDlg::OnBnClickedButtonExampleHolefilling()
 {
-	// TODO: Add your control notification handler code here
+	// <#0> √ ±‚»≠ 
+	vtkSmartPointer<vtkRenderer> prevRenderer =
+		m_vtkWindow->GetRenderers()->GetFirstRenderer();
+	if (prevRenderer != NULL)
+		m_vtkWindow->RemoveRenderer(prevRenderer);
+
+	// <#1> STL Load
+	vtkSmartPointer<vtkSTLReader> m_pSTLReader =
+		vtkSmartPointer<vtkSTLReader>::New();
+	m_pSTLReader->SetFileName("../data/(2019-05-02) [MeshDefect] Hole.stl");
+	m_pSTLReader->Update();
+
+	vtkSmartPointer<vtkNamedColors> colors =
+		vtkSmartPointer<vtkNamedColors>::New();
+
+	vtkSmartPointer<vtkFillHolesFilter> fillHolesFilter =
+		vtkSmartPointer<vtkFillHolesFilter>::New();
+	fillHolesFilter->SetInputData(m_pSTLReader->GetOutput());
+	fillHolesFilter->SetHoleSize(100000.0);
+	fillHolesFilter->Update();
+
+	// Make the triangle winding order consistent
+	vtkSmartPointer<vtkPolyDataNormals> normals =
+		vtkSmartPointer<vtkPolyDataNormals>::New();
+	normals->SetInputData(fillHolesFilter->GetOutput());
+	normals->ConsistencyOn();
+	normals->SplittingOff();
+	normals->Update();
+
+#if 0
+	// Restore the original normals
+	normals->GetOutput()->GetPointData()->
+		SetNormals(input->GetPointData()->GetNormals());
+#endif
+	// Visualize
+	// Define viewport ranges
+	// (xmin, ymin, xmax, ymax)
+	double leftViewport[4] = { 0.0, 0.0, 0.5, 1.0 };
+	double rightViewport[4] = { 0.5, 0.0, 1.0, 1.0 };
+
+	// Create a mapper and actor
+	vtkSmartPointer<vtkPolyDataMapper> originalMapper =
+		vtkSmartPointer<vtkPolyDataMapper>::New();
+	originalMapper->SetInputData(m_pSTLReader->GetOutput());
+
+	vtkSmartPointer<vtkProperty> backfaceProp =
+		vtkSmartPointer<vtkProperty>::New();
+	backfaceProp->SetDiffuseColor(colors->GetColor3d("Banana").GetData());
+
+	vtkSmartPointer<vtkActor> originalActor =
+		vtkSmartPointer<vtkActor>::New();
+	originalActor->SetMapper(originalMapper);
+	originalActor->SetBackfaceProperty(backfaceProp);
+	originalActor->GetProperty()->SetDiffuseColor(
+		colors->GetColor3d("Flesh").GetData());
+
+	vtkSmartPointer<vtkPolyDataMapper> filledMapper =
+		vtkSmartPointer<vtkPolyDataMapper>::New();
+	filledMapper->SetInputData(fillHolesFilter->GetOutput());
+
+	vtkSmartPointer<vtkActor> filledActor =
+		vtkSmartPointer<vtkActor>::New();
+	filledActor->SetMapper(filledMapper);
+	filledActor->GetProperty()->SetDiffuseColor(
+		colors->GetColor3d("Flesh").GetData());
+	filledActor->SetBackfaceProperty(backfaceProp);
+
+	// Create a renderer, render window, and interactor
+	vtkSmartPointer<vtkRenderer> leftRenderer =
+		vtkSmartPointer<vtkRenderer>::New();
+	leftRenderer->SetViewport(leftViewport);
+
+	vtkSmartPointer<vtkRenderer> rightRenderer =
+		vtkSmartPointer<vtkRenderer>::New();
+	rightRenderer->SetViewport(rightViewport);
+
+	vtkSmartPointer<vtkRenderWindow> renderWindow =
+		vtkSmartPointer<vtkRenderWindow>::New();
+	renderWindow->SetSize(600, 300);
+
+	renderWindow->AddRenderer(leftRenderer);
+	renderWindow->AddRenderer(rightRenderer);
+
+	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor =
+		vtkSmartPointer<vtkRenderWindowInteractor>::New();
+	renderWindowInteractor->SetRenderWindow(renderWindow);
+
+	// Add the actor to the scene
+	leftRenderer->AddActor(originalActor);
+	rightRenderer->AddActor(filledActor);
+	leftRenderer->SetBackground(colors->GetColor3d("PaleGreen").GetData());
+
+	leftRenderer->GetActiveCamera()->SetPosition(0, -1, 0);
+	leftRenderer->GetActiveCamera()->SetFocalPoint(0, 0, 0);
+	leftRenderer->GetActiveCamera()->SetViewUp(0, 0, 1);
+	leftRenderer->GetActiveCamera()->Azimuth(30);
+	leftRenderer->GetActiveCamera()->Elevation(30);
+
+	leftRenderer->ResetCamera();
+
+	rightRenderer->SetBackground(colors->GetColor3d("LightGreen").GetData());
+
+	// Share the camera
+
+	rightRenderer->SetActiveCamera(leftRenderer->GetActiveCamera());
+	// Render and interact
+	renderWindow->Render();
+
+	renderWindowInteractor->Start();
 }
 
 void CvtkMFCDlgExDlg::GenerateNeighborList(OUT std::vector<vtkIdType>& vecOut,
