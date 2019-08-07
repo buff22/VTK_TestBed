@@ -753,6 +753,8 @@ void CvtkMFCDlgExDlg::OnBnClickedButtonStart2()
 	// <#8> Interactor에 Callback 함수 연결
 	m_vtkWindow->GetInteractor()->
 		AddObserver(vtkCommand::LeftButtonPressEvent, pickCallback);
+	//m_vtkWindow->GetInteractor()->
+	//	AddObserver(vtkCommand::MouseMoveEvent, pickCallback);
 
 	// <#9> 화면에 그리기
 	m_vtkWindow->Render();
