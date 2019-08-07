@@ -131,7 +131,6 @@ BEGIN_MESSAGE_MAP(CvtkMFCDlgExDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_START2, &CvtkMFCDlgExDlg::OnBnClickedButtonStart2)
 	ON_BN_CLICKED(IDC_BUTTON_TEST, &CvtkMFCDlgExDlg::OnBnClickedButtonTest)
 	ON_BN_CLICKED(IDC_BUTTON_EXAMPLE_HOLEFILLING, &CvtkMFCDlgExDlg::OnBnClickedButtonExampleHolefilling)
-//	ON_CBN_SELCHANGE(IDC_COMBO_NEIGHBORDEPTH, &CvtkMFCDlgExDlg::OnCbnSelchangeComboNeighbordepth)
 END_MESSAGE_MAP()
 
 // CvtkMFCDlgExDlg 메시지 처리기
@@ -140,7 +139,6 @@ BOOL CvtkMFCDlgExDlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	// 시스템 메뉴에 "정보..." 메뉴 항목을 추가합니다.
-
 	// IDM_ABOUTBOX는 시스템 명령 범위에 있어야 합니다.
 	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
 	ASSERT(IDM_ABOUTBOX < 0xF000);
@@ -689,7 +687,14 @@ void CvtkMFCDlgExDlg::OnBnClickedButtonStart()
 	renderer->SetBackground(.1, .2, .3);
 	renderer->ResetCamera();
 
-	// <#6> 화면에 그리기
+	// <#6> Interactor 초기화
+	vtkSmartPointer<vtkRenderWindowInteractor> newIntoractor =
+		vtkSmartPointer<vtkRenderWindowInteractor>::New();
+	newIntoractor->SetInteractorStyle(
+		vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New());
+	m_vtkWindow->SetInteractor(newIntoractor);
+
+	// <#7> 화면에 그리기
 	m_vtkWindow->AddRenderer(renderer);
 	m_vtkWindow->Render();
 }
@@ -730,20 +735,27 @@ void CvtkMFCDlgExDlg::OnBnClickedButtonStart2()
 	renderer->AddActor(actor);
 	renderer->SetBackground(.1, .2, .3);
 	renderer->ResetCamera();
-
-	// <#6> 화면에 그리기
 	m_vtkWindow->AddRenderer(renderer);
-	m_vtkWindow->Render();
 
-	// <#7> CallBack 함수 연결
+	// <#6> CallBack 함수 설정
 	vtkSmartPointer<vtkCallbackCommand> pickCallback = 
 		vtkSmartPointer<vtkCallbackCommand>::New();
 	pickCallback->SetCallback(cbFindNeighborRingFace);
 	pickCallback->SetClientData(this);
 
-	// <#8> Interactor 설정
+	// <#7> Interactor 초기화
+	vtkSmartPointer<vtkRenderWindowInteractor> newIntoractor =
+		vtkSmartPointer<vtkRenderWindowInteractor>::New();
+	newIntoractor->SetInteractorStyle(
+		vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New());
+		m_vtkWindow->SetInteractor(newIntoractor);
+
+	// <#8> Interactor에 Callback 함수 연결
 	m_vtkWindow->GetInteractor()->
 		AddObserver(vtkCommand::LeftButtonPressEvent, pickCallback);
+
+	// <#9> 화면에 그리기
+	m_vtkWindow->Render();
 }
 
 void CvtkMFCDlgExDlg::OnBnClickedButtonTest()
