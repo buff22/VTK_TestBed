@@ -180,6 +180,8 @@ BOOL CvtkMFCDlgExDlg::OnInitDialog()
 		m_cbNeighborDepth->AddString(_T("1"));
 		m_cbNeighborDepth->AddString(_T("2"));
 		m_cbNeighborDepth->AddString(_T("3"));
+		m_cbNeighborDepth->AddString(_T("4"));
+		m_cbNeighborDepth->AddString(_T("5"));
 		m_cbNeighborDepth->SelectString(0, _T("1"));
 	}
 
@@ -483,7 +485,7 @@ void PickCallbackFunction2(vtkObject* caller, long unsigned int eventId,
 	}
 }
 
-void PickCallbackFunction3(vtkObject* caller, long unsigned int eventId,
+void cbFindNeighborRingFace(vtkObject* caller, long unsigned int eventId,
 	void* clientData, void* callData)
 {
 	// Interactor 가져오기
@@ -736,7 +738,7 @@ void CvtkMFCDlgExDlg::OnBnClickedButtonStart2()
 	// <#7> CallBack 함수 연결
 	vtkSmartPointer<vtkCallbackCommand> pickCallback = 
 		vtkSmartPointer<vtkCallbackCommand>::New();
-	pickCallback->SetCallback(PickCallbackFunction3);
+	pickCallback->SetCallback(cbFindNeighborRingFace);
 	pickCallback->SetClientData(this);
 
 	// <#8> Interactor 설정
@@ -912,7 +914,6 @@ void CvtkMFCDlgExDlg::OnBnClickedButtonTest()
 	renderer->AddActor(neighborCellsActor);
 	renderer->SetBackground(.3, .2, .1); // Background color dark red
 
-										 //Render and interact
 	renderWindow->Render();
 	renderWindowInteractor->Start();
 }
