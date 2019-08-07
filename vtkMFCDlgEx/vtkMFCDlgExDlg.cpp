@@ -1,7 +1,3 @@
-
-// vtkMFCDlgExDlg.cpp : 구현 파일
-//
-
 #include "stdafx.h"
 #include "vtkMFCDlgEx.h"
 #include "vtkMFCDlgExDlg.h"
@@ -135,7 +131,7 @@ BEGIN_MESSAGE_MAP(CvtkMFCDlgExDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_START2, &CvtkMFCDlgExDlg::OnBnClickedButtonStart2)
 	ON_BN_CLICKED(IDC_BUTTON_TEST, &CvtkMFCDlgExDlg::OnBnClickedButtonTest)
 	ON_BN_CLICKED(IDC_BUTTON_EXAMPLE_HOLEFILLING, &CvtkMFCDlgExDlg::OnBnClickedButtonExampleHolefilling)
-	ON_CBN_SELCHANGE(IDC_COMBO_NEIGHBORDEPTH, &CvtkMFCDlgExDlg::OnCbnSelchangeComboNeighbordepth)
+//	ON_CBN_SELCHANGE(IDC_COMBO_NEIGHBORDEPTH, &CvtkMFCDlgExDlg::OnCbnSelchangeComboNeighbordepth)
 END_MESSAGE_MAP()
 
 // CvtkMFCDlgExDlg 메시지 처리기
@@ -923,12 +919,6 @@ void CvtkMFCDlgExDlg::OnBnClickedButtonTest()
 
 void CvtkMFCDlgExDlg::OnBnClickedButtonExampleHolefilling()
 {
-	// TODO: Add your control notification handler code here
-}
-
-void CvtkMFCDlgExDlg::OnCbnSelchangeComboNeighbordepth()
-{
-
 	// TODO: Add your control notification handler code here
 }
 

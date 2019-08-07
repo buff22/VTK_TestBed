@@ -44,7 +44,6 @@ public:
 	afx_msg void OnBnClickedButtonStart2();
 	afx_msg void OnBnClickedButtonTest();
 	afx_msg void OnBnClickedButtonExampleHolefilling();
-	afx_msg void OnCbnSelchangeComboNeighbordepth();
 	void GenerateNeighborList(OUT std::vector<vtkIdType>& vecOut,
 		IN std::vector<vtkIdType>& vecIn, IN vtkSmartPointer<vtkTriangleFilter>& triangleFilter);
 	void Deduplication(std::vector<vtkIdType>& vec);
