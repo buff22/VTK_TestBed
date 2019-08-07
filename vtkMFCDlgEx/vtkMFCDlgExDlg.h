@@ -5,6 +5,7 @@
 #pragma once
 #include "afxmenubutton.h"
 #include <vtkSTLReader.h>
+#include <vtkTriangleFilter.h>
 
 
 // CvtkMFCDlgExDlg 대화 상자
@@ -43,9 +44,19 @@ public:
 	afx_msg void OnBnClickedButtonStart2();
 	afx_msg void OnBnClickedButtonTest();
 	afx_msg void OnBnClickedButtonExampleHolefilling();
+	afx_msg void OnCbnSelchangeComboNeighbordepth();
+	void GenerateNeighborList(OUT std::vector<vtkIdType>& vecOut,
+		IN std::vector<vtkIdType>& vecIn, IN vtkSmartPointer<vtkTriangleFilter>& triangleFilter);
+	void Deduplication(std::vector<vtkIdType>& vec);
+	void GenerateNeighborRing(OUT std::vector<vtkIdType>& vecOut,
+		IN std::vector<vtkIdType>& vecMax,
+		IN std::vector<vtkIdType>& vecMin,
+		IN std::vector<vtkIdType>& vecPickFace);
 
 public:
 	vtkSmartPointer<vtkSTLReader> m_pSTLReader;
 	vtkSmartPointer<vtkPolyData> m_pPolyData;
 	vtkIdType m_cellID;
+	CComboBox* m_cbNeighborDepth;
+	std::vector<std::vector<vtkIdType>> m_vecNeighborFace;
 };

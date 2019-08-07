@@ -135,6 +135,7 @@ BEGIN_MESSAGE_MAP(CvtkMFCDlgExDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_START2, &CvtkMFCDlgExDlg::OnBnClickedButtonStart2)
 	ON_BN_CLICKED(IDC_BUTTON_TEST, &CvtkMFCDlgExDlg::OnBnClickedButtonTest)
 	ON_BN_CLICKED(IDC_BUTTON_EXAMPLE_HOLEFILLING, &CvtkMFCDlgExDlg::OnBnClickedButtonExampleHolefilling)
+	ON_CBN_SELCHANGE(IDC_COMBO_NEIGHBORDEPTH, &CvtkMFCDlgExDlg::OnCbnSelchangeComboNeighbordepth)
 END_MESSAGE_MAP()
 
 // CvtkMFCDlgExDlg 메시지 처리기
@@ -176,6 +177,15 @@ BOOL CvtkMFCDlgExDlg::OnInitDialog()
 
 	// Warning Off
 	vtkObject::GlobalWarningDisplayOff();
+
+	// comboNeighborDepth 설정
+	{
+		m_cbNeighborDepth = (CComboBox*)this->GetDlgItem(IDC_COMBO_NEIGHBORDEPTH);
+		m_cbNeighborDepth->AddString(_T("1"));
+		m_cbNeighborDepth->AddString(_T("2"));
+		m_cbNeighborDepth->AddString(_T("3"));
+		m_cbNeighborDepth->SelectString(0, _T("1"));
+	}
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -318,23 +328,23 @@ void PickCallbackFunction2(vtkObject* caller, long unsigned int eventId,
 	if (cellId1 != -1)
 	{
 		vtkSmartPointer<vtkRenderWindowInteractor> itr =
-		reinterpret_cast<vtkRenderWindowInteractor*>(caller);
+			reinterpret_cast<vtkRenderWindowInteractor*>(caller);
 
 		vtkSmartPointer<vtkRenderer> renderer =
-		itr->GetRenderWindow()->GetRenderers()->GetFirstRenderer();
+			itr->GetRenderWindow()->GetRenderers()->GetFirstRenderer();
 
 		vtkSmartPointer<vtkActorCollection> actorCollection =
-		renderer->GetActors();
+			renderer->GetActors();
 		actorCollection->InitTraversal();
 
 		vtkSmartPointer<vtkActor> actor =
-		actorCollection->GetNextActor();
+			actorCollection->GetNextActor();
 
 		vtkSmartPointer<vtkMapper> mapper =
-		actor->GetMapper();
+			actor->GetMapper();
 
-		vtkSmartPointer<vtkPolyData> polyData = (vtkPolyData*) mapper->GetInput();
-		
+		vtkSmartPointer<vtkPolyData> polyData = (vtkPolyData*)mapper->GetInput();
+
 		vtkSmartPointer<vtkTriangleFilter> triangleFilter =
 			vtkSmartPointer<vtkTriangleFilter>::New();
 		triangleFilter->SetInputData(polyData);
@@ -364,13 +374,13 @@ void PickCallbackFunction2(vtkObject* caller, long unsigned int eventId,
 				vtkSmartPointer<vtkIdList>::New();
 			vtkIdType temp = cellPointIds->GetId(i);	// Vertex Id
 			idList->InsertNextId(temp);
-		
+
 			//get the neighbors of the cell
 			vtkSmartPointer<vtkIdList> neighborCellIds =
 				vtkSmartPointer<vtkIdList>::New();
 
-			triangleFilter->GetOutput()->GetCellNeighbors(cellId, idList, 
-														  neighborCellIds);
+			triangleFilter->GetOutput()->GetCellNeighbors(cellId, idList,
+				neighborCellIds);
 
 			for (vtkIdType j = 0; j < neighborCellIds->GetNumberOfIds(); j++)
 				neighbors.push_back(neighborCellIds->GetId(j));
@@ -477,6 +487,176 @@ void PickCallbackFunction2(vtkObject* caller, long unsigned int eventId,
 	}
 }
 
+void PickCallbackFunction3(vtkObject* caller, long unsigned int eventId,
+	void* clientData, void* callData)
+{
+	// Interactor 가져오기
+	vtkSmartPointer<vtkRenderWindowInteractor> interactor =
+		vtkRenderWindowInteractor::SafeDownCast(caller);
+	if (interactor == NULL)
+		return;
+
+	// ClientData 가져오기
+	CvtkMFCDlgExDlg* dlg = (CvtkMFCDlgExDlg*)clientData;
+	if (dlg == NULL)
+		return;
+
+	// 마우스 클릭 위치
+	int pos[2];
+	interactor->GetLastEventPosition(pos);
+
+	// 마우스 클릭 위치에서 Picking 수행
+	vtkSmartPointer<vtkCellPicker> picker =
+		vtkSmartPointer<vtkCellPicker>::New();
+	picker->SetTolerance(0.005);		// picking 감도 설정
+	picker->Pick(pos[0], pos[1], 0,
+		interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
+
+	// cellId1 = Face Idx
+	vtkIdType cellId1 = picker->GetCellId();	// -1이면 picking 되지 않음
+	if (cellId1 != -1)
+	{
+		// polyData 찾기
+		vtkSmartPointer<vtkRenderer> renderer =
+		interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer();
+
+		vtkSmartPointer<vtkActorCollection> actorCollection =
+		renderer->GetActors();
+		actorCollection->InitTraversal();
+
+		vtkSmartPointer<vtkActor> actor =
+		actorCollection->GetNextActor();
+
+		vtkSmartPointer<vtkMapper> mapper =
+		actor->GetMapper();
+
+		vtkSmartPointer<vtkPolyData> polyData = (vtkPolyData*) mapper->GetInput();
+		
+		vtkSmartPointer<vtkTriangleFilter> triangleFilter =
+			vtkSmartPointer<vtkTriangleFilter>::New();
+		triangleFilter->SetInputData(polyData);
+		triangleFilter->Update();
+
+		// m_vecNeighborFace 초기화
+		
+		dlg->m_vecNeighborFace.clear();
+
+		// Find all cells connected to point 0
+		std::vector<vtkIdType> vec;
+		vec.push_back(cellId1);
+		dlg->m_vecNeighborFace.push_back(vec);
+		vec.clear();
+		dlg->m_vecNeighborFace.push_back(vec);
+
+		// call GenerateNeighborFace
+		int nCntDepth = dlg->m_cbNeighborDepth->GetCurSel() + 1;
+		for (int i = 0; i < nCntDepth; ++i)
+		{
+			dlg->GenerateNeighborList(dlg->m_vecNeighborFace.at(i + 1),
+				dlg->m_vecNeighborFace.at(i),
+				triangleFilter);
+
+			// 찾은 vec 정리
+			dlg->Deduplication(dlg->m_vecNeighborFace.at(i + 1));
+
+			vec.clear();
+			dlg->m_vecNeighborFace.push_back(vec);
+		}
+
+		vtkSmartPointer<vtkDataSetMapper> mapperPickingFace =
+			vtkSmartPointer<vtkDataSetMapper>::New();
+
+		// Create a dataset with the cell of interest
+		{
+			vtkSmartPointer<vtkIdTypeArray> ids =
+				vtkSmartPointer<vtkIdTypeArray>::New();
+			ids->SetNumberOfComponents(1);
+			ids->InsertNextValue(dlg->m_vecNeighborFace.at(0).at(0));
+
+			vtkSmartPointer<vtkSelectionNode> selectionNode =
+				vtkSmartPointer<vtkSelectionNode>::New();
+			selectionNode->SetFieldType(vtkSelectionNode::CELL);
+			selectionNode->SetContentType(vtkSelectionNode::INDICES);
+			selectionNode->SetSelectionList(ids);
+
+			vtkSmartPointer<vtkSelection> selection =
+				vtkSmartPointer<vtkSelection>::New();
+			selection->AddNode(selectionNode);
+
+			vtkSmartPointer<vtkExtractSelection> extractSelection =
+				vtkSmartPointer<vtkExtractSelection>::New();
+			extractSelection->SetInputConnection(0, triangleFilter->GetOutputPort());
+			extractSelection->SetInputData(1, selection);
+			extractSelection->Update();
+
+			mapperPickingFace->SetInputConnection(extractSelection->GetOutputPort());
+
+		}
+
+		vtkSmartPointer<vtkActor> actorPickingFace =
+			vtkSmartPointer<vtkActor>::New();
+		actorPickingFace->SetMapper(mapperPickingFace);
+		actorPickingFace->GetProperty()->SetColor(1, 0, 0);
+		
+
+		vtkSmartPointer<vtkDataSetMapper> mapperNeighborFace =
+			vtkSmartPointer<vtkDataSetMapper>::New();
+
+		// Create a dataset with the neighbor cells
+		{
+			// GenerateNeighborRing 
+			std::vector<vtkIdType> vecNeighborRing;
+			dlg->GenerateNeighborRing(vecNeighborRing,
+				dlg->m_vecNeighborFace.at(nCntDepth),
+				dlg->m_vecNeighborFace.at(nCntDepth - 1),
+				dlg->m_vecNeighborFace.at(0));
+
+			vtkSmartPointer<vtkIdTypeArray> ids =
+				vtkSmartPointer<vtkIdTypeArray>::New();
+			ids->SetNumberOfComponents(1);
+			for (std::vector<vtkIdType>::iterator it1 = vecNeighborRing.begin(); it1 != vecNeighborRing.end(); it1++)
+			{
+				ids->InsertNextValue(*it1);
+			}
+
+			vtkSmartPointer<vtkSelectionNode> selectionNode =
+				vtkSmartPointer<vtkSelectionNode>::New();
+			selectionNode->SetFieldType(vtkSelectionNode::CELL);
+			selectionNode->SetContentType(vtkSelectionNode::INDICES);
+			selectionNode->SetSelectionList(ids);
+
+			vtkSmartPointer<vtkSelection> selection =
+				vtkSmartPointer<vtkSelection>::New();
+			selection->AddNode(selectionNode);
+
+			vtkSmartPointer<vtkExtractSelection> extractSelection =
+				vtkSmartPointer<vtkExtractSelection>::New();
+			extractSelection->SetInputConnection(0, triangleFilter->GetOutputPort());
+			extractSelection->SetInputData(1, selection);
+			extractSelection->Update();
+
+			mapperNeighborFace->SetInputConnection(extractSelection->GetOutputPort());
+		}
+
+		vtkSmartPointer<vtkActor> actorNeighborFace =
+			vtkSmartPointer<vtkActor>::New();
+		actorNeighborFace->SetMapper(mapperNeighborFace);
+		actorNeighborFace->GetProperty()->SetColor(0, 1, 0);
+
+		// <#> 화면에 뿌리기
+		{
+			//Add the actors to the scene
+			renderer->RemoveAllViewProps();
+			renderer->AddActor(actor);
+			renderer->AddActor(actorPickingFace);
+			renderer->AddActor(actorNeighborFace);
+			renderer->SetBackground(.3, .2, .1); // Background color dark red
+
+			interactor->GetRenderWindow()->Render();
+		}
+	}
+}
+
 void CvtkMFCDlgExDlg::OnBnClickedButtonStart()
 {
 	// <#0> 초기화 
@@ -557,7 +737,8 @@ void CvtkMFCDlgExDlg::OnBnClickedButtonStart2()
 	// <#7> CallBack 함수 연결
 	vtkSmartPointer<vtkCallbackCommand> pickCallback = 
 		vtkSmartPointer<vtkCallbackCommand>::New();
-	pickCallback->SetCallback(PickCallbackFunction2);
+	pickCallback->SetCallback(PickCallbackFunction3);
+	pickCallback->SetClientData(this);
 
 	// <#8> Interactor 설정
 	m_vtkWindow->GetInteractor()->
@@ -740,4 +921,79 @@ void CvtkMFCDlgExDlg::OnBnClickedButtonTest()
 void CvtkMFCDlgExDlg::OnBnClickedButtonExampleHolefilling()
 {
 	// TODO: Add your control notification handler code here
+}
+
+void CvtkMFCDlgExDlg::OnCbnSelchangeComboNeighbordepth()
+{
+
+	// TODO: Add your control notification handler code here
+}
+
+void CvtkMFCDlgExDlg::GenerateNeighborList(OUT std::vector<vtkIdType>& vecOut,
+	IN std::vector<vtkIdType>& vecIn, IN vtkSmartPointer<vtkTriangleFilter>& triangleFilter)
+{
+	for (std::vector<vtkIdType>::iterator iter = vecIn.begin(); iter != vecIn.end(); ++iter)
+	{
+		vtkIdType cellId = *(iter);
+
+		vtkSmartPointer<vtkIdList> cellPointIds =
+			vtkSmartPointer<vtkIdList>::New();
+		// Get Vertex Ids From Face Id
+		triangleFilter->GetOutput()->GetCellPoints(cellId, cellPointIds);
+
+		for (vtkIdType i = 0; i < cellPointIds->GetNumberOfIds(); i++)
+		{
+			vtkSmartPointer<vtkIdList> idList =
+				vtkSmartPointer<vtkIdList>::New();
+			vtkIdType temp = cellPointIds->GetId(i);	// Vertex Id
+			idList->InsertNextId(temp);
+
+			//get the neighbors of the cell
+			vtkSmartPointer<vtkIdList> neighborCellIds =
+				vtkSmartPointer<vtkIdList>::New();
+
+			triangleFilter->GetOutput()->GetCellNeighbors(cellId, idList,
+				neighborCellIds);
+
+			for (vtkIdType j = 0; j < neighborCellIds->GetNumberOfIds(); j++)
+				vecOut.push_back(neighborCellIds->GetId(j));
+		}
+
+		OutputDebugString(L"\n Point neighbor ids are: ");
+		for (std::vector<vtkIdType>::iterator it1 = vecOut.begin(); it1 != vecOut.end(); it1++)
+		{
+			CString strDebug;
+			strDebug.Format(L" %d", *it1);
+			::OutputDebugString(strDebug);
+		}
+		OutputDebugString(L"\n");
+	}
+}
+
+void CvtkMFCDlgExDlg::Deduplication(std::vector<vtkIdType>& vec)
+{
+	std::sort(vec.begin(), vec.end());
+	std::vector<vtkIdType>::iterator iter = std::unique(vec.begin(), vec.end());
+	vec.erase(iter, vec.end());
+}
+
+void CvtkMFCDlgExDlg::GenerateNeighborRing(OUT std::vector<vtkIdType>& vecOut,
+	IN std::vector<vtkIdType>& vecMax,
+	IN std::vector<vtkIdType>& vecMin,
+	IN std::vector<vtkIdType>& vecPickFace)
+{
+	std::vector<vtkIdType> vecRef = vecMin;
+	vecRef.push_back(vecPickFace.at(0));
+	for (std::vector<vtkIdType>::iterator iterMax = vecMax.begin(); iterMax != vecMax.end(); ++iterMax)
+	{
+		int nCnt = 0;
+		for (std::vector<vtkIdType>::iterator iterMin = vecRef.begin(); iterMin != vecRef.end(); ++iterMin)
+		{
+			if ((*iterMax) == (*iterMin))
+				++nCnt;
+		}
+
+		if (nCnt == 0)
+			vecOut.push_back((*iterMax));
+	}
 }
