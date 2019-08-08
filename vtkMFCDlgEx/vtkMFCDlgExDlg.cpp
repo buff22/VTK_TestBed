@@ -185,6 +185,9 @@ BOOL CvtkMFCDlgExDlg::OnInitDialog()
 		m_cbNeighborDepth->SelectString(0, _T("1"));
 	}
 
+	// General Infoamtion Init
+	SetGeneralInfo(nullptr, true);
+
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
 
@@ -713,11 +716,13 @@ void CvtkMFCDlgExDlg::OnBnClickedButtonStart2()
 	vtkSmartPointer<vtkSTLReader> m_pSTLReader = 
 		vtkSmartPointer<vtkSTLReader>::New();
 	m_pSTLReader->SetFileName("../data/cast3br.stl");
+	//m_pSTLReader->SetFileName("../data/(2019-05-02) [MeshDefect] Hole.stl");
+	//m_pSTLReader->SetFileName("../data/OneFace.stl");
 	m_pSTLReader->Update();
 
 	// <#2> STL을 PolyData로 변환 저장
 	m_pPolyData = m_pSTLReader->GetOutput();
-	//vtkPolyData* temp = m_pSTLReader->GetOutput();
+	SetGeneralInfo(m_pPolyData);
 
 	// <#3> Mapper 만들기
 	vtkSmartPointer<vtkPolyDataMapper> mapper = 
@@ -1047,6 +1052,32 @@ void CvtkMFCDlgExDlg::OnBnClickedButtonExampleHolefilling()
 	renderWindow->Render();
 
 	renderWindowInteractor->Start();
+}
+
+void CvtkMFCDlgExDlg::SetGeneralInfo(vtkPolyData* inputData,
+	bool bIsInit)
+{
+	CString strFaceCnt;
+	CString strVertexCnt;
+
+	if (bIsInit == true)
+	{
+		strFaceCnt = _T("");
+		GetDlgItem(IDC_Text_Face_Value)->SetWindowTextW(strFaceCnt);
+
+		strVertexCnt = _T("");
+		GetDlgItem(IDC_Text_Vertex_Value)->SetWindowTextW(strVertexCnt);
+		return;
+	}
+
+	if (inputData == nullptr)
+		return;
+
+	strFaceCnt.Format(_T("%d"), inputData->GetNumberOfCells());
+	GetDlgItem(IDC_Text_Face_Value)->SetWindowTextW(strFaceCnt);
+	
+	strVertexCnt.Format(_T("%d"), inputData->GetNumberOfPoints());
+	GetDlgItem(IDC_Text_Vertex_Value)->SetWindowTextW(strVertexCnt);
 }
 
 void CvtkMFCDlgExDlg::GenerateNeighborList(OUT std::vector<vtkIdType>& vecOut,
