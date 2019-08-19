@@ -3,92 +3,11 @@
 #include "vtkMFCDlgExDlg.h"
 #include "afxdialogex.h"
 
-#include <vtkRendererCollection.h>
-#include <vtkCamera.h>
-#include <vtkLight.h>
-#include <vtkPoints.h>
-#include <vtkCellArray.h>
-#include <vtkPolyData.h>
-#include <vtkArrowSource.h>
-#include <vtkSTLReader.h>
-#include <vtkSTLWriter.h>
-#include <vtkProperty.h>
-#include <vtkCleanPolyData.h>
-#include <vtkPolyDataNormals.h>
-#include <vtkDecimatePro.h>
-#include <vtkQuadricClustering.h>
-#include <vtkWindowedSincPolyDataFilter.h>
-#include <vtkPolyDataConnectivityFilter.h>
-#include <vtkPlane.h>
-#include <vtkClipPolyData.h>
-#include <vtkTransform.h>
-#include <vtkTransformPolyDataFilter.h>
-#include <vtkLandmarkTransform.h>
-#include <vtkIterativeClosestPointTransform.h>
-#include <vtkFileOutputWindow.h>
-#include <vtkDICOMImageReader.h>
-#include <vtkImageViewer2.h>
-#include <vtkMarchingCubes.h>
-#include <vtkSmartVolumeMapper.h>
-#include <vtkVolumeProperty.h>
-#include <vtkPiecewiseFunction.h>
-#include <vtkColorTransferFunction.h>
-#include <vtkVolume.h>
-#include <vtkExtractVOI.h>
-#include <vtkImageData.h>
-#include <vtkCallbackCommand.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkCellPicker.h>
-#include <vtkCaptionActor2D.h>
-#include <vtkTextActor.h>
-#include <vtkTextProperty.h>
-#include <vtkAnnotatedCubeActor.h>
-
-// Test
-#include <vtkSphereSource.h>
-#include <vtkTriangleFilter.h>
-#include <list>
-#include <vtkDataSetMapper.h>
-#include <vtkSelectionNode.h>
-#include <vtkSelection.h>
-#include <vtkExtractSelection.h>
-#include <vtkAlgorithmOutput.h>
-#include <vtkUnstructuredGrid.h>
-#include <vtkVersion.h>
-#include <vtkSmartPointer.h>
-#include <vtkRendererCollection.h>
-#include <vtkDataSetMapper.h>
-#include <vtkUnstructuredGrid.h>
-#include <vtkIdTypeArray.h>
-#include <vtkTriangleFilter.h>
-#include <vtkPolyDataMapper.h>
-#include <vtkActor.h>
-#include <vtkCommand.h>
-#include <vtkRenderWindow.h>
-#include <vtkRenderer.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkPolyData.h>
-#include <vtkPoints.h>
-#include <vtkCellArray.h>
-#include <vtkPlaneSource.h>
-#include <vtkCellPicker.h>
-#include <vtkInteractorStyleTrackballCamera.h>
-#include <vtkProperty.h>
-#include <vtkSelectionNode.h>
-#include <vtkSelection.h>
-#include <vtkExtractSelection.h>
-#include <vtkObjectFactory.h>
-#include <vtkDataObject.h>
-#include <vtkNamedColors.h>
-#include <vtkFillHolesFilter.h>
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
-
 // 응용 프로그램 정보에 사용되는 CAboutDlg 대화 상자입니다.
-
 class CAboutDlg : public CDialogEx
 {
 public:
@@ -129,10 +48,10 @@ BEGIN_MESSAGE_MAP(CvtkMFCDlgExDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(IDC_BUTTON_START, &CvtkMFCDlgExDlg::OnBnClickedButtonStart)
-	ON_BN_CLICKED(IDC_BUTTON_START2, &CvtkMFCDlgExDlg::OnBnClickedButtonStart2)
-	ON_BN_CLICKED(IDC_BUTTON_TEST, &CvtkMFCDlgExDlg::OnBnClickedButtonTest)
-	ON_BN_CLICKED(IDC_BUTTON_EXAMPLE_HOLEFILLING, &CvtkMFCDlgExDlg::OnBnClickedButtonExampleHolefilling)
+	ON_BN_CLICKED(IDC_BTN_FILELOAD, &CvtkMFCDlgExDlg::OnClickedBtnFileLoad)
+	ON_BN_CLICKED(IDC_BTN_NEIGHBOR_RING, &CvtkMFCDlgExDlg::OnBnClickedBtnNeighborRing)
+	ON_BN_CLICKED(IDC_BTN_EXAMPLE_NEIGHBORFACE, &CvtkMFCDlgExDlg::OnBnClickedBtnExampleNeighborFace)
+	ON_BN_CLICKED(IDC_BTN_EXAMPLE_HOLEFILLING, &CvtkMFCDlgExDlg::OnBnClickedButtonExampleHolefilling)
 END_MESSAGE_MAP()
 
 // CvtkMFCDlgExDlg 메시지 처리기
@@ -176,13 +95,23 @@ BOOL CvtkMFCDlgExDlg::OnInitDialog()
 
 	// comboNeighborDepth 설정
 	{
+		// <#> Resource값 가져오기
 		m_cbNeighborDepth = (CComboBox*)this->GetDlgItem(IDC_COMBO_NEIGHBORDEPTH);
-		m_cbNeighborDepth->AddString(_T("1"));
-		m_cbNeighborDepth->AddString(_T("2"));
-		m_cbNeighborDepth->AddString(_T("3"));
-		m_cbNeighborDepth->AddString(_T("4"));
-		m_cbNeighborDepth->AddString(_T("5"));
-		m_cbNeighborDepth->SelectString(0, _T("1"));
+		
+		// <#> ComboBox 등록
+		m_cbNeighborDepth->AddString(_T("01"));
+		m_cbNeighborDepth->AddString(_T("02"));
+		m_cbNeighborDepth->AddString(_T("03"));
+		m_cbNeighborDepth->AddString(_T("04"));
+		m_cbNeighborDepth->AddString(_T("05"));
+		m_cbNeighborDepth->AddString(_T("06"));
+		m_cbNeighborDepth->AddString(_T("07"));
+		m_cbNeighborDepth->AddString(_T("08"));
+		m_cbNeighborDepth->AddString(_T("09"));
+		m_cbNeighborDepth->AddString(_T("10"));
+
+		// <#> ComboBox 최초 선택
+		m_cbNeighborDepth->SelectString(0, _T("01"));
 	}
 
 	// General Infoamtion Init
@@ -277,215 +206,6 @@ void CvtkMFCDlgExDlg::ResizeVtkWindow()
 	CRect rc;
 	GetDlgItem(IDC_STATIC_FRAME)->GetClientRect(rc);
 	m_vtkWindow->SetSize(rc.Width(), rc.Height());
-}
-
-void PickCallbackFunction(vtkObject* caller, long unsigned int eventId,
-	void* clientData, void* callData)
-{
-	// Interactor 가져오기
-	vtkSmartPointer<vtkRenderWindowInteractor> interactor = 
-		vtkRenderWindowInteractor::SafeDownCast(caller);
-	if (interactor == NULL)
-		return;
-
-	// 마우스 클릭 위치
-	int pos[2];
-	interactor->GetLastEventPosition(pos);
-
-	// 마우스 클릭 위치에서 Picking 수행
-	vtkSmartPointer<vtkCellPicker> picker =
-		vtkSmartPointer<vtkCellPicker>::New();
-	picker->SetTolerance(0.005);		// picking 감도 설정
-	picker->Pick(pos[0], pos[1], 0,
-		interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
-
-	vtkIdType cellId = picker->GetCellId();	// -1이면 picking 되지 않음
-	if (cellId != -1)
-		MessageBox(NULL, _T("Pick Event"), _T("Pop-up"), MB_OK);
-}
-
-void PickCallbackFunction2(vtkObject* caller, long unsigned int eventId,
-	void* clientData, void* callData)
-{
-	// Interactor 가져오기
-	vtkSmartPointer<vtkRenderWindowInteractor> interactor =
-		vtkRenderWindowInteractor::SafeDownCast(caller);
-	if (interactor == NULL)
-		return;
-
-	// 마우스 클릭 위치
-	int pos[2];
-	interactor->GetLastEventPosition(pos);
-
-	// 마우스 클릭 위치에서 Picking 수행
-	vtkSmartPointer<vtkCellPicker> picker =
-		vtkSmartPointer<vtkCellPicker>::New();
-	picker->SetTolerance(0.005);		// picking 감도 설정
-	picker->Pick(pos[0], pos[1], 0,
-		interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
-
-	// cellId1 = Face Idx
-	vtkIdType cellId1 = picker->GetCellId();	// -1이면 picking 되지 않음
-	if (cellId1 != -1)
-	{
-		vtkSmartPointer<vtkRenderWindowInteractor> itr =
-			reinterpret_cast<vtkRenderWindowInteractor*>(caller);
-
-		vtkSmartPointer<vtkRenderer> renderer =
-			itr->GetRenderWindow()->GetRenderers()->GetFirstRenderer();
-
-		vtkSmartPointer<vtkActorCollection> actorCollection =
-			renderer->GetActors();
-		actorCollection->InitTraversal();
-
-		vtkSmartPointer<vtkActor> actor =
-			actorCollection->GetNextActor();
-
-		vtkSmartPointer<vtkMapper> mapper =
-			actor->GetMapper();
-
-		vtkSmartPointer<vtkPolyData> polyData = (vtkPolyData*)mapper->GetInput();
-
-		vtkSmartPointer<vtkTriangleFilter> triangleFilter =
-			vtkSmartPointer<vtkTriangleFilter>::New();
-		triangleFilter->SetInputData(polyData);
-		triangleFilter->Update();
-
-		// Find all cells connected to point 0
-		vtkIdType cellId = cellId1;
-
-		vtkSmartPointer<vtkIdList> cellPointIds =
-			vtkSmartPointer<vtkIdList>::New();
-		// Get Vertex Ids From Face Id
-		triangleFilter->GetOutput()->GetCellPoints(cellId, cellPointIds);
-
-		// neighbor cells may be listed multiple times
-		// use std::set instead of std::list if you want a unique list of neighbors
-		std::list<vtkIdType> neighbors;
-
-		/*For each vertice of the cell, we calculate which cells uses that point.
-		So if we make this, for each vertice, we have all the neighbors.
-		In the case we use ''cellPointIds'' as a parameter of ''GeteCellNeighbors'',
-		we will obtain an empty set. Because the only cell that is using that set of points
-		is the current one. That is why we have to make each vertice at time.*/
-
-		for (vtkIdType i = 0; i < cellPointIds->GetNumberOfIds(); i++)
-		{
-			vtkSmartPointer<vtkIdList> idList =
-				vtkSmartPointer<vtkIdList>::New();
-			vtkIdType temp = cellPointIds->GetId(i);	// Vertex Id
-			idList->InsertNextId(temp);
-
-			//get the neighbors of the cell
-			vtkSmartPointer<vtkIdList> neighborCellIds =
-				vtkSmartPointer<vtkIdList>::New();
-
-			triangleFilter->GetOutput()->GetCellNeighbors(cellId, idList,
-				neighborCellIds);
-
-			for (vtkIdType j = 0; j < neighborCellIds->GetNumberOfIds(); j++)
-				neighbors.push_back(neighborCellIds->GetId(j));
-		}
-
-		OutputDebugString(L"\n Point neighbor ids are: ");
-		for (std::list<vtkIdType>::iterator it1 = neighbors.begin(); it1 != neighbors.end(); it1++)
-		{
-			CString strDebug;
-			strDebug.Format(L" %d", *it1);
-			::OutputDebugString(strDebug);
-		}
-		OutputDebugString(L"\n");
-
-		vtkSmartPointer<vtkDataSetMapper> mainCellMapper =
-			vtkSmartPointer<vtkDataSetMapper>::New();
-
-		vtkSmartPointer<vtkDataSetMapper> neighborCellsMapper =
-			vtkSmartPointer<vtkDataSetMapper>::New();
-
-		// Create a dataset with the cell of interest
-		{
-			vtkSmartPointer<vtkIdTypeArray> ids =
-				vtkSmartPointer<vtkIdTypeArray>::New();
-			ids->SetNumberOfComponents(1);
-			ids->InsertNextValue(cellId);
-
-			vtkSmartPointer<vtkSelectionNode> selectionNode =
-				vtkSmartPointer<vtkSelectionNode>::New();
-			selectionNode->SetFieldType(vtkSelectionNode::CELL);
-			selectionNode->SetContentType(vtkSelectionNode::INDICES);
-			selectionNode->SetSelectionList(ids);
-
-			vtkSmartPointer<vtkSelection> selection =
-				vtkSmartPointer<vtkSelection>::New();
-			selection->AddNode(selectionNode);
-
-			vtkSmartPointer<vtkExtractSelection> extractSelection =
-				vtkSmartPointer<vtkExtractSelection>::New();
-			extractSelection->SetInputConnection(0, triangleFilter->GetOutputPort());
-#if VTK_MAJOR_VERSION <= 5
-			extractSelection->SetInput(1, selection);
-#else
-			extractSelection->SetInputData(1, selection);
-#endif
-			extractSelection->Update();
-
-			mainCellMapper->SetInputConnection(extractSelection->GetOutputPort());
-
-		}
-
-		vtkSmartPointer<vtkActor> mainCellActor =
-			vtkSmartPointer<vtkActor>::New();
-		mainCellActor->SetMapper(mainCellMapper);
-		mainCellActor->GetProperty()->SetColor(1, 0, 0);
-
-		// Create a dataset with the neighbor cells
-		{
-			vtkSmartPointer<vtkIdTypeArray> ids =
-				vtkSmartPointer<vtkIdTypeArray>::New();
-			ids->SetNumberOfComponents(1);
-			for (std::list<vtkIdType>::iterator it1 = neighbors.begin(); it1 != neighbors.end(); it1++)
-			{
-				ids->InsertNextValue(*it1);
-			}
-
-			vtkSmartPointer<vtkSelectionNode> selectionNode =
-				vtkSmartPointer<vtkSelectionNode>::New();
-			selectionNode->SetFieldType(vtkSelectionNode::CELL);
-			selectionNode->SetContentType(vtkSelectionNode::INDICES);
-			selectionNode->SetSelectionList(ids);
-
-			vtkSmartPointer<vtkSelection> selection =
-				vtkSmartPointer<vtkSelection>::New();
-			selection->AddNode(selectionNode);
-
-			vtkSmartPointer<vtkExtractSelection> extractSelection =
-				vtkSmartPointer<vtkExtractSelection>::New();
-			extractSelection->SetInputConnection(0, triangleFilter->GetOutputPort());
-#if VTK_MAJOR_VERSION <= 5
-			extractSelection->SetInput(1, selection);
-#else
-			extractSelection->SetInputData(1, selection);
-#endif
-			extractSelection->Update();
-
-			neighborCellsMapper->SetInputConnection(extractSelection->GetOutputPort());
-
-		}
-
-		vtkSmartPointer<vtkActor> neighborCellsActor =
-			vtkSmartPointer<vtkActor>::New();
-		neighborCellsActor->SetMapper(neighborCellsMapper);
-		neighborCellsActor->GetProperty()->SetColor(0, 1, 0);
-
-		//Add the actors to the scene
-		renderer->RemoveAllViewProps();
-		renderer->AddActor(actor);
-		renderer->AddActor(mainCellActor);
-		renderer->AddActor(neighborCellsActor);
-		renderer->SetBackground(.3, .2, .1); // Background color dark red
-
-		itr->GetRenderWindow()->Render();
-	}
 }
 
 void cbFindNeighborRingFace(vtkObject* caller, long unsigned int eventId,
@@ -661,113 +381,96 @@ void cbFindNeighborRingFace(vtkObject* caller, long unsigned int eventId,
 	}
 }
 
-void CvtkMFCDlgExDlg::OnBnClickedButtonStart()
+void CvtkMFCDlgExDlg::OnClickedBtnFileLoad()
 {
-	// <#0> 초기화 
-	vtkSmartPointer<vtkRenderer> prevRenderer = m_vtkWindow->GetRenderers()->GetFirstRenderer();
-	if (prevRenderer != NULL)
-		m_vtkWindow->RemoveRenderer(prevRenderer);
+	try
+	{
+		// <#> FileDialog Filter 설정
+		TCHAR szFilter[] = _T("STL (*.stl)|*.stl|All Files (*.*)|*.*||");
 
-	// <#1> STL Load
-	vtkSmartPointer<vtkSTLReader> m_pSTLReader = vtkSmartPointer<vtkSTLReader>::New();
-	m_pSTLReader->SetFileName("../data/cast3br.stl");
-	m_pSTLReader->Update();
+		// <#> FileDialog 생성
+		CFileDialog dlg(TRUE, NULL, NULL, OFN_HIDEREADONLY, szFilter);
 
-	// <#2> STL을 PolyData로 변환 저장
-	m_pPolyData = m_pSTLReader->GetOutput();
+		// <#> Data 폴더 경로 설정
+		{
+			// 실행된 appPath 가져오기
+			TCHAR appPath[MAX_PATH];
+			GetCurrentDirectory(MAX_PATH, appPath);
 
-	// <#3> Mapper 만들기
-	vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	mapper->SetInputData(m_pPolyData);
+			// appPath 분리하기
+			CString strDefaultPath;
+			CString strSubPath;
+			int nCount = 0;
+			while (AfxExtractSubString(strSubPath, appPath, nCount, _T('\\')) == TRUE)
+			{
+				CString strTemp;
+				BOOL bRtn = AfxExtractSubString(strTemp, appPath, nCount + 1, _T('\\'));
+				if (bRtn == FALSE)
+					break;
 
-	// <#4> Actor 만들기
-	vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-	actor->SetMapper(mapper);
-	actor->GetProperty()->SetEdgeColor(0, 0, 0);
-	actor->GetProperty()->EdgeVisibilityOn();
+				strDefaultPath.Format(_T("%s%s\\"), strDefaultPath, strSubPath);
+				++nCount;
+			}
+			strDefaultPath.Format(_T("%s%s"), strDefaultPath, _T("data"));
 
-	// <#5> Renderer 만들기
-	vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
-	renderer->AddActor(actor);
-	renderer->SetBackground(.1, .2, .3);
-	renderer->ResetCamera();
+			// CString to TCHAR[]
+			TCHAR szDataFolder[MAX_PATH];
+			memset(szDataFolder, 0x00, sizeof(TCHAR) * MAX_PATH);
+			_tcscpy_s(szDataFolder, MAX_PATH, strDefaultPath.GetBuffer(0));
+			strDefaultPath.ReleaseBuffer();
 
-	// <#6> Interactor 초기화
-	vtkSmartPointer<vtkRenderWindowInteractor> newIntoractor =
-		vtkSmartPointer<vtkRenderWindowInteractor>::New();
-	newIntoractor->SetInteractorStyle(
-		vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New());
-	m_vtkWindow->SetInteractor(newIntoractor);
+			// Default Folder 설정
+			dlg.m_ofn.lpstrInitialDir = szDataFolder;
+		}
 
-	// <#7> 화면에 그리기
-	m_vtkWindow->AddRenderer(renderer);
-	m_vtkWindow->Render();
+		if (dlg.DoModal() == IDOK)
+		{
+			// stl만 처리가능
+			CString strFilePath = dlg.GetPathName();
+			CString strExtention = PathFindExtension(strFilePath);
+			if (strExtention.Compare(_T(".stl")) != 0)
+			{
+				MessageBox(_T("Only Load STL Files"), _T("ERROR"), MB_OK);
+				throw 1;
+			}
+
+			RenderingSTLFile(strFilePath);
+		}
+	}
+	catch (...)
+	{
+		return;
+	}
+
+	return;
 }
 
-void CvtkMFCDlgExDlg::OnBnClickedButtonStart2()
+void CvtkMFCDlgExDlg::OnBnClickedBtnNeighborRing()
 {
-	// <#0> 초기화 
-	vtkSmartPointer<vtkRenderer> prevRenderer = 
-		m_vtkWindow->GetRenderers()->GetFirstRenderer();
-	if (prevRenderer != NULL)
-		m_vtkWindow->RemoveRenderer(prevRenderer);
-
-	// <#1> STL Load
-	vtkSmartPointer<vtkSTLReader> m_pSTLReader = 
-		vtkSmartPointer<vtkSTLReader>::New();
-	m_pSTLReader->SetFileName("../data/cast3br.stl");
-	//m_pSTLReader->SetFileName("../data/(2019-05-02) [MeshDefect] Hole.stl");
-	//m_pSTLReader->SetFileName("../data/OneFace.stl");
-	m_pSTLReader->Update();
-
-	// <#2> STL을 PolyData로 변환 저장
-	m_pPolyData = m_pSTLReader->GetOutput();
-	SetGeneralInfo(m_pPolyData);
-
-	// <#3> Mapper 만들기
-	vtkSmartPointer<vtkPolyDataMapper> mapper = 
-		vtkSmartPointer<vtkPolyDataMapper>::New();
-	mapper->SetInputData(m_pPolyData);
-	
-	// <#4> Actor 만들기
-	vtkSmartPointer<vtkActor> actor = 
-		vtkSmartPointer<vtkActor>::New();
-	actor->SetMapper(mapper);
-	actor->GetProperty()->SetEdgeColor(0, 0, 0);
-	actor->GetProperty()->EdgeVisibilityOn();
-
-	// <#5> Renderer 만들기
-	vtkSmartPointer<vtkRenderer> renderer = 
-		vtkSmartPointer<vtkRenderer>::New();
-	renderer->AddActor(actor);
-	renderer->SetBackground(.1, .2, .3);
-	renderer->ResetCamera();
-	m_vtkWindow->AddRenderer(renderer);
-
-	// <#6> CallBack 함수 설정
+	// <#1> CallBack 함수 설정
 	vtkSmartPointer<vtkCallbackCommand> pickCallback = 
 		vtkSmartPointer<vtkCallbackCommand>::New();
 	pickCallback->SetCallback(cbFindNeighborRingFace);
 	pickCallback->SetClientData(this);
 
-	// <#7> Interactor 초기화
+	// <#2> Interactor 초기화
 	vtkSmartPointer<vtkRenderWindowInteractor> newIntoractor =
 		vtkSmartPointer<vtkRenderWindowInteractor>::New();
 	newIntoractor->SetInteractorStyle(
 		vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New());
 		m_vtkWindow->SetInteractor(newIntoractor);
 
-	// <#8> Interactor에 Callback 함수 연결
+	// <#3> Interactor에 Callback 함수 연결
 	m_vtkWindow->GetInteractor()->
 		AddObserver(vtkCommand::LeftButtonPressEvent, pickCallback);
 	//m_vtkWindow->GetInteractor()->
 	//	AddObserver(vtkCommand::MouseMoveEvent, pickCallback);
 
-	// <#9> 화면에 그리기
+	// <#4> 화면에 그리기
 	m_vtkWindow->Render();
 }
 
-void CvtkMFCDlgExDlg::OnBnClickedButtonTest()
+void CvtkMFCDlgExDlg::OnBnClickedBtnExampleNeighborFace()
 {
 	// <#0> 초기화 
 	vtkSmartPointer<vtkRenderer> prevRenderer = m_vtkWindow->GetRenderers()->GetFirstRenderer();
@@ -1052,6 +755,57 @@ void CvtkMFCDlgExDlg::OnBnClickedButtonExampleHolefilling()
 	renderWindow->Render();
 
 	renderWindowInteractor->Start();
+}
+
+void CvtkMFCDlgExDlg::RenderingSTLFile(CString& strSTLPath)
+{
+	// <#0> 초기화 
+	vtkSmartPointer<vtkRenderer> prevRenderer =
+		m_vtkWindow->GetRenderers()->GetFirstRenderer();
+	if (prevRenderer != NULL)
+		m_vtkWindow->RemoveRenderer(prevRenderer);
+
+	// <#1> STL Load
+	vtkSmartPointer<vtkSTLReader> STLReader =
+		vtkSmartPointer<vtkSTLReader>::New();
+	STLReader->SetFileName(CT2A(strSTLPath));
+	STLReader->Update();
+
+	// <#2> STL을 PolyData로 변환 저장
+	m_pPolyData = STLReader->GetOutput();
+
+	// <#3> STL FaceCnt & VertexCnt 정보 반영
+	SetGeneralInfo(m_pPolyData);
+
+	// <#4> Mapper 만들기
+	vtkSmartPointer<vtkPolyDataMapper> mapper =
+		vtkSmartPointer<vtkPolyDataMapper>::New();
+	mapper->SetInputData(m_pPolyData);
+
+	// <#5> Actor 만들기
+	vtkSmartPointer<vtkActor> actor =
+		vtkSmartPointer<vtkActor>::New();
+	actor->SetMapper(mapper);
+	actor->GetProperty()->SetEdgeColor(0, 0, 0);
+	actor->GetProperty()->EdgeVisibilityOn();
+
+	// <#6> Renderer 만들기
+	vtkSmartPointer<vtkRenderer> renderer =
+		vtkSmartPointer<vtkRenderer>::New();
+	renderer->AddActor(actor);
+	renderer->SetBackground(.1, .2, .3);
+	renderer->ResetCamera();
+	m_vtkWindow->AddRenderer(renderer);
+
+	// <#7> Interactor
+	vtkSmartPointer<vtkRenderWindowInteractor> newIntoractor =
+		vtkSmartPointer<vtkRenderWindowInteractor>::New();
+	newIntoractor->SetInteractorStyle(
+		vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New());
+	m_vtkWindow->SetInteractor(newIntoractor);
+
+	// <#8> 화면에 그리기
+	m_vtkWindow->Render();
 }
 
 void CvtkMFCDlgExDlg::SetGeneralInfo(vtkPolyData* inputData,

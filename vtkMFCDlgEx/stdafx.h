@@ -58,21 +58,50 @@
 4(vtkRenderingOpenGL,vtkInteractionStyle,vtkRenderingFreeType,vtkRenderingContextOpenGL)
 #define vtkRenderingVolume_AUTOINIT 1(vtkRenderingVolumeOpenGL)
 
-#include <vtkRenderWindow.h>
+// <#> VTK Header
 #include <vtkSmartPointer.h>
+#include <vtkCamera.h>
+//#include <vtkLight.h>	// 현재 Light 사용 안하고 있음 (2019-08-20)
+
+#include <vtkSTLReader.h>
+//#include <vtkSTLWriter.h>	// 추후 Hole 만든 STL 저장 기능 필요
 #include <vtkPolyData.h>
+
 #include <vtkPolyDataMapper.h>
 #include <vtkActor.h>
 #include <vtkRenderer.h>
+#include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkInteractorStyleTrackballCamera.h>
-#include <vtkConeSource.h>
 
-#include <vtkAbstractWidget.h>
-#include <vtkAngleWidget.h>
-#include <vtkImagePlaneWidget.h>
-#include <vtkCaptionWidget.h>
-#include <vtkOrientationMarkerWidget.h>
-#include <vtkTextWidget.h>
+// call back
+#include <vtkCallbackCommand.h>
+#include <vtkRendererCollection.h>
+#include <vtkCellPicker.h>
+
+// neighbor
+#include <vtkProperty.h>
+
+// Fill Hole
+#include <vtkPolyDataNormals.h>
 
 
+
+// Test
+#include <vtkSphereSource.h>
+#include <vtkTriangleFilter.h>
+#include <list>
+#include <vtkDataSetMapper.h>
+#include <vtkSelectionNode.h>
+#include <vtkSelection.h>
+#include <vtkExtractSelection.h>
+#include <vtkAlgorithmOutput.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkVersion.h>
+#include <vtkIdTypeArray.h>
+#include <vtkCommand.h>
+#include <vtkPlaneSource.h>
+#include <vtkObjectFactory.h>
+#include <vtkDataObject.h>
+#include <vtkNamedColors.h>
+#include <vtkFillHolesFilter.h>
