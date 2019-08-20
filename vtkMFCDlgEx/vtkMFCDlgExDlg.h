@@ -27,6 +27,7 @@ public:
 public:
 	afx_msg void OnClickedBtnFileLoad();
 	afx_msg void OnBnClickedBtnNeighborRing();
+	afx_msg void OnBnClickedBtnNeighborArea();
 	afx_msg void OnBnClickedBtnExampleNeighborFace();
 	afx_msg void OnBnClickedButtonExampleHolefilling();
 	void RenderingSTLFile(CString& strSTLPath);
@@ -39,11 +40,14 @@ public:
 		IN std::vector<vtkIdType>& vecMax,
 		IN std::vector<vtkIdType>& vecMin,
 		IN std::vector<vtkIdType>& vecPickFace);
+	void GenerateNeighborArea(OUT std::vector<vtkIdType>& vecOut,
+		IN std::vector<vtkIdType>& vecMax,
+		IN std::vector<vtkIdType>& vecPickFace);
 
 public:
 	vtkSmartPointer<vtkRenderWindow>  		m_vtkWindow;
 	vtkSmartPointer<vtkPolyData>			m_pPolyData;
-	vtkIdType								m_cellID;
 	CComboBox*								m_cbNeighborDepth;
 	std::vector<std::vector<vtkIdType>>		m_vecNeighborFace;
+	std::vector<vtkIdType>					m_vecSelectedFace;
 };
