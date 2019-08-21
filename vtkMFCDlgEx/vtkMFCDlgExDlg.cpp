@@ -50,9 +50,10 @@ BEGIN_MESSAGE_MAP(CvtkMFCDlgExDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BTN_FILELOAD, &CvtkMFCDlgExDlg::OnClickedBtnFileLoad)
 	ON_BN_CLICKED(IDC_BTN_NEIGHBOR_RING, &CvtkMFCDlgExDlg::OnBnClickedBtnNeighborRing)
+	ON_BN_CLICKED(IDC_BTN_NEIGHBOR_AREA, &CvtkMFCDlgExDlg::OnBnClickedBtnNeighborArea)
+	ON_BN_CLICKED(IDC_BTN_DELETE_SELECTEDFACE, &CvtkMFCDlgExDlg::OnBnClickedBtnDeleteSelectedface)
 	ON_BN_CLICKED(IDC_BTN_EXAMPLE_NEIGHBORFACE, &CvtkMFCDlgExDlg::OnBnClickedBtnExampleNeighborFace)
 	ON_BN_CLICKED(IDC_BTN_EXAMPLE_HOLEFILLING, &CvtkMFCDlgExDlg::OnBnClickedButtonExampleHolefilling)
-	ON_BN_CLICKED(IDC_BTN_NEIGHBOR_AREA, &CvtkMFCDlgExDlg::OnBnClickedBtnNeighborArea)
 END_MESSAGE_MAP()
 
 // CvtkMFCDlgExDlg 메시지 처리기
@@ -433,9 +434,11 @@ void cbNeighborRingFace(vtkObject* caller, long unsigned int eventId,
 			vtkSmartPointer<vtkIdTypeArray> ids =
 				vtkSmartPointer<vtkIdTypeArray>::New();
 			ids->SetNumberOfComponents(1);
+			dlg->m_vecSelectedFace.clear();
 			for (std::vector<vtkIdType>::iterator it1 = vecNeighborRing.begin(); it1 != vecNeighborRing.end(); it1++)
 			{
 				ids->InsertNextValue(*it1);
+				dlg->m_vecSelectedFace.push_back(*it1);
 			}
 
 			vtkSmartPointer<vtkSelectionNode> selectionNode =
@@ -604,9 +607,12 @@ void cbNeighborAreaFace(vtkObject* caller, long unsigned int eventId,
 			vtkSmartPointer<vtkIdTypeArray> ids =
 				vtkSmartPointer<vtkIdTypeArray>::New();
 			ids->SetNumberOfComponents(1);
+			dlg->m_vecSelectedFace.clear();
+			dlg->m_vecSelectedFace.push_back(pikingFaceIdx);
 			for (std::vector<vtkIdType>::iterator it1 = vecNeighborRing.begin(); it1 != vecNeighborRing.end(); it1++)
 			{
 				ids->InsertNextValue(*it1);
+				dlg->m_vecSelectedFace.push_back(*it1);
 			}
 
 			vtkSmartPointer<vtkSelectionNode> selectionNode =
@@ -733,7 +739,6 @@ void CvtkMFCDlgExDlg::OnBnClickedBtnNeighborRing()
 	m_vtkWindow->Render();
 }
 
-
 void CvtkMFCDlgExDlg::OnBnClickedBtnNeighborArea()
 {
 	// <#1> Interactor
@@ -754,6 +759,54 @@ void CvtkMFCDlgExDlg::OnBnClickedBtnNeighborArea()
 		AddObserver(vtkCommand::LeftButtonPressEvent, pickCallback);
 
 	// <#3> 화면에 그리기
+	m_vtkWindow->Render();
+}
+
+void CvtkMFCDlgExDlg::OnBnClickedBtnDeleteSelectedface()
+{
+	// <#0> 초기화 
+	vtkSmartPointer<vtkRenderer> prevRenderer =
+		m_vtkWindow->GetRenderers()->GetFirstRenderer();
+	if (prevRenderer != NULL)
+		m_vtkWindow->RemoveRenderer(prevRenderer);
+
+	// <#1> Mark a cell as deleted.
+	for (std::vector<vtkIdType>::iterator iter = m_vecSelectedFace.begin(); iter != m_vecSelectedFace.end(); ++iter)
+		m_pPolyData->DeleteCell(*iter);
+	
+	// <#2> Remove the marked cell.
+	m_pPolyData->RemoveDeletedCells();
+
+	// <#3> STL FaceCnt & VertexCnt 정보 반영
+	SetGeneralInfo(m_pPolyData);
+
+	// <#4> Mapper 만들기
+	vtkSmartPointer<vtkPolyDataMapper> mapper =
+		vtkSmartPointer<vtkPolyDataMapper>::New();
+	mapper->SetInputData(m_pPolyData);
+
+	// <#5> Actor 만들기
+	vtkSmartPointer<vtkActor> actor =
+		vtkSmartPointer<vtkActor>::New();
+	actor->SetMapper(mapper);
+	actor->GetProperty()->SetEdgeColor(0, 0, 0);
+	actor->GetProperty()->EdgeVisibilityOn();
+
+	// <#6> Renderer 만들기
+	vtkSmartPointer<vtkRenderer> renderer =
+		vtkSmartPointer<vtkRenderer>::New();
+	renderer->AddActor(actor);
+	renderer->SetBackground(.1, .2, .3);
+	m_vtkWindow->AddRenderer(renderer);
+
+	//// <#7> Interactor
+	//vtkSmartPointer<vtkRenderWindowInteractor> newIntoractor =
+	//	vtkSmartPointer<vtkRenderWindowInteractor>::New();
+	//newIntoractor->SetInteractorStyle(
+	//	vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New());
+	//m_vtkWindow->SetInteractor(newIntoractor);
+
+	// <#8> 화면에 그리기
 	m_vtkWindow->Render();
 }
 
