@@ -764,12 +764,6 @@ void CvtkMFCDlgExDlg::OnBnClickedBtnNeighborArea()
 
 void CvtkMFCDlgExDlg::OnBnClickedBtnDeleteSelectedface()
 {
-	// <#0> 초기화 
-	vtkSmartPointer<vtkRenderer> prevRenderer =
-		m_vtkWindow->GetRenderers()->GetFirstRenderer();
-	if (prevRenderer != NULL)
-		m_vtkWindow->RemoveRenderer(prevRenderer);
-
 	// <#1> Mark a cell as deleted.
 	for (std::vector<vtkIdType>::iterator iter = m_vecSelectedFace.begin(); iter != m_vecSelectedFace.end(); ++iter)
 		m_pPolyData->DeleteCell(*iter);
@@ -792,19 +786,22 @@ void CvtkMFCDlgExDlg::OnBnClickedBtnDeleteSelectedface()
 	actor->GetProperty()->SetEdgeColor(0, 0, 0);
 	actor->GetProperty()->EdgeVisibilityOn();
 
-	// <#6> Renderer 만들기
+	// <#6> Camera 찾기
+	vtkSmartPointer<vtkCamera> camera = 
+		m_vtkWindow->GetRenderers()->GetFirstRenderer()->GetActiveCamera();
+
+	// <#7> Renderer 만들기
+	vtkSmartPointer<vtkRenderer> prevRenderer =
+		m_vtkWindow->GetRenderers()->GetFirstRenderer();
+	if (prevRenderer != NULL)
+		m_vtkWindow->RemoveRenderer(prevRenderer);
+
 	vtkSmartPointer<vtkRenderer> renderer =
 		vtkSmartPointer<vtkRenderer>::New();
 	renderer->AddActor(actor);
 	renderer->SetBackground(.1, .2, .3);
+	renderer->SetActiveCamera(camera);
 	m_vtkWindow->AddRenderer(renderer);
-
-	//// <#7> Interactor
-	//vtkSmartPointer<vtkRenderWindowInteractor> newIntoractor =
-	//	vtkSmartPointer<vtkRenderWindowInteractor>::New();
-	//newIntoractor->SetInteractorStyle(
-	//	vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New());
-	//m_vtkWindow->SetInteractor(newIntoractor);
 
 	// <#8> 화면에 그리기
 	m_vtkWindow->Render();
