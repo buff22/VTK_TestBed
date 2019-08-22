@@ -29,6 +29,7 @@ public:
 	afx_msg void OnBnClickedBtnNeighborRing();
 	afx_msg void OnBnClickedBtnNeighborArea();
 	afx_msg void OnBnClickedBtnDeleteSelectedface();
+	afx_msg void OnBnClickedBtnFillhole();
 	afx_msg void OnBnClickedBtnExampleNeighborFace();
 	afx_msg void OnBnClickedButtonExampleHolefilling();
 	void RenderingSTLFile(CString& strSTLPath);

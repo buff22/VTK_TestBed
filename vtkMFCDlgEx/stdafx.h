@@ -105,3 +105,5 @@
 #include <vtkDataObject.h>
 #include <vtkNamedColors.h>
 #include <vtkFillHolesFilter.h>
+
+#include <vtkPointData.h>

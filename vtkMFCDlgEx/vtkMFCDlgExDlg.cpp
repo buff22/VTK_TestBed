@@ -52,6 +52,7 @@ BEGIN_MESSAGE_MAP(CvtkMFCDlgExDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_NEIGHBOR_RING, &CvtkMFCDlgExDlg::OnBnClickedBtnNeighborRing)
 	ON_BN_CLICKED(IDC_BTN_NEIGHBOR_AREA, &CvtkMFCDlgExDlg::OnBnClickedBtnNeighborArea)
 	ON_BN_CLICKED(IDC_BTN_DELETE_SELECTEDFACE, &CvtkMFCDlgExDlg::OnBnClickedBtnDeleteSelectedface)
+	ON_BN_CLICKED(IDC_BTN_FILLHOLE, &CvtkMFCDlgExDlg::OnBnClickedBtnFillhole)
 	ON_BN_CLICKED(IDC_BTN_EXAMPLE_NEIGHBORFACE, &CvtkMFCDlgExDlg::OnBnClickedBtnExampleNeighborFace)
 	ON_BN_CLICKED(IDC_BTN_EXAMPLE_HOLEFILLING, &CvtkMFCDlgExDlg::OnBnClickedButtonExampleHolefilling)
 END_MESSAGE_MAP()
@@ -778,6 +779,7 @@ void CvtkMFCDlgExDlg::OnBnClickedBtnDeleteSelectedface()
 	vtkSmartPointer<vtkPolyDataMapper> mapper =
 		vtkSmartPointer<vtkPolyDataMapper>::New();
 	mapper->SetInputData(m_pPolyData);
+	mapper->Update();
 
 	// <#5> Actor 만들기
 	vtkSmartPointer<vtkActor> actor =
@@ -1118,6 +1120,7 @@ void CvtkMFCDlgExDlg::RenderingSTLFile(CString& strSTLPath)
 	vtkSmartPointer<vtkPolyDataMapper> mapper =
 		vtkSmartPointer<vtkPolyDataMapper>::New();
 	mapper->SetInputData(m_pPolyData);
+	mapper->Update();
 
 	// <#5> Actor 만들기
 	vtkSmartPointer<vtkActor> actor =
@@ -1254,4 +1257,95 @@ void CvtkMFCDlgExDlg::GenerateNeighborArea(OUT std::vector<vtkIdType>& vecOut,
 		
 		vecOut.push_back((*iterMax));
 	}
+}
+
+void CvtkMFCDlgExDlg::OnBnClickedBtnFillhole()
+{
+	// <#> Filter 설정
+	vtkSmartPointer<vtkFillHolesFilter> fillHolesFilter =
+		vtkSmartPointer<vtkFillHolesFilter>::New();
+	fillHolesFilter->SetInputData(m_pPolyData);
+	fillHolesFilter->SetHoleSize(100000.0);
+	fillHolesFilter->Update();
+
+	// Make the triangle winding order consistent
+	auto normals = vtkSmartPointer<vtkPolyDataNormals>::New();
+	normals->SetInputConnection(fillHolesFilter->GetOutputPort());
+	normals->ConsistencyOn();
+	normals->SplittingOff();
+	normals->Update();
+	normals->GetOutput()->GetPointData()->SetNormals(
+		m_pPolyData->GetPointData()->GetNormals());
+
+
+	//// Generate normals
+	//vtkSmartPointer<vtkPolyDataNormals> normalGenerator = 
+	//	vtkSmartPointer<vtkPolyDataNormals>::New();
+
+	//normalGenerator->SetInputData(fillHolesFilter->GetOutput());
+	//normalGenerator->ComputePointNormalsOff();
+	//normalGenerator->ComputeCellNormalsOn();
+	//normalGenerator->Update();
+
+	// <#> Mapper 설정
+	vtkSmartPointer<vtkPolyDataMapper> filledMapper =
+		vtkSmartPointer<vtkPolyDataMapper>::New();
+	filledMapper->SetInputData(fillHolesFilter->GetOutput());
+	filledMapper->Update();
+
+	vtkSmartPointer<vtkPolyDataMapper> normalMapper =
+		vtkSmartPointer<vtkPolyDataMapper>::New();
+	normalMapper->SetInputData(normals->GetOutput());
+	normalMapper->Update();
+
+	// <#> 색 설정
+	vtkSmartPointer<vtkNamedColors> colors =
+		vtkSmartPointer<vtkNamedColors>::New();
+
+	// <#> original에서는 backFace가 맞으나, FillHole에서는 FilledFace 색상임.
+	// FillHole에서 색상을 구분하기 위해 normal을 뒤짚어서 채운게 아닌지 확인해 봐야함.
+	vtkSmartPointer<vtkProperty> backfaceProp =
+		vtkSmartPointer<vtkProperty>::New();
+	backfaceProp->SetDiffuseColor(colors->GetColor3d("red").GetData());
+
+	// <#> Actor 설정
+	vtkSmartPointer<vtkActor> filledActor =
+		vtkSmartPointer<vtkActor>::New();
+	filledActor->SetMapper(filledMapper);
+	filledActor->SetBackfaceProperty(backfaceProp);
+	filledActor->GetProperty()->SetDiffuseColor(
+		colors->GetColor3d("white").GetData());
+	filledActor->GetProperty()->SetEdgeColor(0, 0, 0);
+	filledActor->GetProperty()->EdgeVisibilityOn();
+
+	vtkSmartPointer<vtkActor> normalActor =
+		vtkSmartPointer<vtkActor>::New();
+	normalActor->SetMapper(normalMapper);
+	//normalActor->GetProperty()->SetDiffuseColor(colors->GetColor3d("blue").GetData());
+
+	// <#> Renderer 설정
+	vtkSmartPointer<vtkRenderer> prevRenderer =
+		m_vtkWindow->GetRenderers()->GetFirstRenderer();
+	if (prevRenderer != NULL)
+		m_vtkWindow->RemoveRenderer(prevRenderer);
+
+	vtkSmartPointer<vtkRenderer> Renderer =
+		vtkSmartPointer<vtkRenderer>::New();
+	Renderer->AddActor(filledActor);
+	//Renderer->AddActor(normalActor);
+	Renderer->SetBackground(colors->GetColor3d("PaleGreen").GetData());
+	m_vtkWindow->AddRenderer(Renderer);
+
+	// <#> intoractor
+	vtkSmartPointer<vtkRenderWindowInteractor> newIntoractor =
+		vtkSmartPointer<vtkRenderWindowInteractor>::New();
+	newIntoractor->SetInteractorStyle(
+		vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New());
+	m_vtkWindow->SetInteractor(newIntoractor);
+
+	// <#> 화면에 그리기
+	m_vtkWindow->Render();
+
+	// <#> m_pPolyData 변경해주기
+	m_pPolyData = fillHolesFilter->GetOutput();
 }
